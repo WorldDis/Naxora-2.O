@@ -14,7 +14,7 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.nexora"
+        applicationId = "com.nexora.app"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
