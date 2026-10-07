@@ -9,13 +9,10 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
 
-    repositories {
-        google()
-        mavenCentral()
-        maven {
-            url = java.net.URI("https://alphacephei.com/maven/")
-        }
-    }
+    plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+}
 }
 
 rootProject.name = "Nexora"
