@@ -18,7 +18,7 @@ class AccessibilityActionDispatcher(private val service: AccessibilityService) {
     fun performType(node: AccessibilityNodeInfo?, textToType: String): Boolean {
         if (node == null) return false
         val arguments = Bundle().apply {
-            putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHAR_SEQUENCE, textToType)
+            putCharSequence("ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE", textToType)
         }
         return node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
     }

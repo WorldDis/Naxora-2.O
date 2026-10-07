@@ -26,7 +26,7 @@ class UiNodeParser {
         val desc = node.contentDescription?.toString()
         val viewId = node.viewIdResourceName
 
-        if (!text.isNull meOrBlank() || !desc.isNullOrBlank() || node.isClickable) {
+        if (!text.isNullOrBlank() || !desc.isNullOrBlank() || node.isClickable) {
             list.add(
                 UiElement(
                     id = viewId,
