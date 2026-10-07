@@ -1,0 +1,23 @@
+# Android Build Files
+*.iml
+.gradle
+/local.properties
+/.idea/
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx/
+*.apk
+*.aar
+
+# Android Studio & Acode Caches
+.navigation/
+.gradle/
+build/
+app/build/
+
+# Keys & Secrets
+*.jks
+*.keystore
+google-services.json
