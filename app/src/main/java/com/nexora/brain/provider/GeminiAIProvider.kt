@@ -7,7 +7,7 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-class GeminiAIProvider(private val apiKey: String) : AIProvider {
+class GeminiAIProvider(private val apiKey: String ="YOUR_GEMINI_API_KEY") : AIProvider {
 
     override val providerId: String = "GEMINI_FREE_TIER"
 
