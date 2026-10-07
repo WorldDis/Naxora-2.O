@@ -10,7 +10,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url = java.net.URI("https://alphacephei.com/maven/") } // Vosk repository
+        maven { url = java.net.URI("https://alphacephei.com/maven/") }
     }
 }
 
