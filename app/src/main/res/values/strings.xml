@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NEXORA</string>
+    <string name="accessibility_service_description">NEXORA AI Action Agent accessibility service for screen interaction and automation.</string>
+</resources>
