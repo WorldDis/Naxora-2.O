@@ -1,8 +1,4 @@
-repositories {
-    google()
-    mavenCentral()
-    maven { url = uri("https://alphacephei.com/maven/") }
-}
+
 
 plugins {
     id("com.android.application")
