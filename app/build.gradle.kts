@@ -7,13 +7,14 @@ android {
     namespace = "com.nexora"
     compileSdk = 34
 
-    defaultConfig {
-        applicationId = "com.nexora.app"
+        defaultConfig {
+        applicationId = "com.nexora.nextaura.v2"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "2.0"
     }
+
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
