@@ -7,6 +7,7 @@ import com.nexora.core.eventbus.NexoraEventBus
 import com.nexora.core.state.TaskState
 import com.nexora.core.state.TaskStateManager
 import com.nexora.core.verification.VerificationEngine
+import com.nexora.tools.ToolRegistry
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
@@ -15,6 +16,7 @@ import kotlinx.coroutines.launch
 class TaskOrchestrator(
     private val taskStateManager: TaskStateManager,
     private val planner: ReActPlanner,
+    private val toolRegistry: ToolRegistry,
     private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Main)
 ) {
 
@@ -41,18 +43,15 @@ class TaskOrchestrator(
         coroutineScope.launch(Dispatchers.IO) {
             taskStateManager.transitionTo(TaskState.PLANNING)
 
-            // ১. স্ক্রিন থেকে তথ্য সংগ্রহ
             val rootNode = NexoraAccessibilityService.instance?.rootInActiveWindow
             val screenContext = rootNode?.toString() ?: "Screen node not available"
 
-            // ২. AI Brain থেকে প্ল্যান তৈরি
             val response = planner.planNextStep(
                 userQuery = query,
-                availableToolsJson = "[]", // টুলস রেজিস্ট্রি পরবর্তী ফেজে যুক্ত হবে
+                availableToolsJson = toolRegistry.getToolsJsonSchema(),
                 screenContext = screenContext
             )
 
-            // ৩. ফলাফল অনুযায়ী কাজ সম্পাদন বা স্পিচ রেসপন্স
             if (response.finalResponseToUser != null) {
                 NexoraEventBus.emit(NexoraEvent.SpeakFeedback(response.finalResponseToUser))
             }
