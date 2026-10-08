@@ -32,6 +32,9 @@ jobs:
         mkdir -p ~/.android
         echo "$DEBUG_KEYSTORE_B64" | base64 -d > ~/.android/debug.keystore
 
+    - name: Unit tests
+      run: gradle testDebugUnitTest
+
     - name: Build APK with Gradle
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
