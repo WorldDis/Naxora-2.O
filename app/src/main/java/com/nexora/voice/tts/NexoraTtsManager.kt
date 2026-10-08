@@ -3,6 +3,7 @@ package com.nexora.voice.tts
 import android.content.Context
 import android.speech.tts.TextToSpeech
 import android.util.Log
+import java.util.Locale
 
 class NexoraTtsManager(
     context: Context,
@@ -14,21 +15,24 @@ class NexoraTtsManager(
     init {
         tts = TextToSpeech(context) { status ->
             isReady = status == TextToSpeech.SUCCESS
+            if (isReady) {
+                val bn = Locale("bn", "IN")
+                val res = tts?.isLanguageAvailable(bn) ?: TextToSpeech.LANG_NOT_SUPPORTED
+                tts?.language = if (res >= TextToSpeech.LANG_AVAILABLE) bn else Locale.US
+            }
             onReady(isReady)
             Log.d("NexoraTtsManager", "TTS initialized: $isReady")
         }
     }
 
     fun speak(text: String) {
-        if (isReady && tts != null) {
-            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null)
+        if (isReady) {
+            tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "nexora-utterance")
         }
     }
 
     fun stop() {
-        if (tts != null) {
-            tts?.stop()
-        }
+        tts?.stop()
     }
 
     fun shutdown() {

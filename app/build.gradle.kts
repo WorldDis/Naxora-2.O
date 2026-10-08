@@ -7,14 +7,24 @@ android {
     namespace = "com.nexora"
     compileSdk = 34
 
-        defaultConfig {
+    defaultConfig {
         applicationId = "com.nexora.nextaura.v2"
         minSdk = 26
         targetSdk = 34
         versionCode = 2
         versionName = "2.0"
+
+        // API key CI secret theke ashe (source-e hard-code na)
+        buildConfigField(
+            "String",
+            "GEMINI_API_KEY",
+            "\"${System.getenv("GEMINI_API_KEY") ?: ""}\""
+        )
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8

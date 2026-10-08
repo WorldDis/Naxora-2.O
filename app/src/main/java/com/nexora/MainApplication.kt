@@ -5,13 +5,11 @@ import com.nexora.core.state.TaskStateManager
 
 class MainApplication : Application() {
 
-    lateinit var taskStateManager: TaskStateManager
-        private set
+    val taskStateManager: TaskStateManager by lazy { TaskStateManager() }
 
     override fun onCreate() {
         super.onCreate()
         instance = this
-        taskStateManager = TaskStateManager()
     }
 
     companion object {

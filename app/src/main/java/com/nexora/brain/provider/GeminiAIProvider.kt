@@ -3,11 +3,16 @@ package com.nexora.brain.provider
 import com.nexora.brain.model.AIPlanResponse
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONObject
+import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 
-class GeminiAIProvider(private val apiKey: String ="YOUR_GEMINI_API_KEY") : AIProvider {
+class GeminiAIProvider(
+    private val apiKey: String,
+    private val model: String = "gemini-2.0-flash"
+) : AIProvider {
 
     override val providerId: String = "GEMINI_FREE_TIER"
 
@@ -17,94 +22,69 @@ class GeminiAIProvider(private val apiKey: String ="YOUR_GEMINI_API_KEY") : AIPr
         availableToolsJson: String,
         currentContextState: String
     ): AIPlanResponse = withContext(Dispatchers.IO) {
-        val endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$apiKey"
-        
-        val promptText = """
+        val prompt = """
             $systemPrompt
             Available Tools: $availableToolsJson
             Current UI Context: $currentContextState
             User Goal: $userQuery
-            
-            Respond ONLY in valid JSON format:
-            {
-              "reasoning": "step description",
-              "selectedTool": "tool_name",
-              "toolParameters": {},
-              "isTaskComplete": false,
-              "finalResponseToUser": "speech text"
-            }
+            Respond ONLY in valid JSON: {"reasoning":"...","selectedTool":"...","toolParameters":{},"isTaskComplete":false,"finalResponseToUser":"..."}
         """.trimIndent()
 
-        val requestBody = JSONObject().apply {
-            put("contents", org.json.JSONArray().put(JSONObject().apply {
-                put("parts", org.json.JSONArray().put(JSONObject().apply {
-                    put("text", promptText)
-                }))
-            }))
+        val body = JSONObject().put(
+            "contents",
+            JSONArray().put(JSONObject().put("parts", JSONArray().put(JSONObject().put("text", prompt))))
+        ).toString()
+
+        val endpoint = "https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent"
+        val conn = (URL(endpoint).openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            connectTimeout = 15_000
+            readTimeout = 30_000
+            doOutput = true
+            setRequestProperty("Content-Type", "application/json")
+            setRequestProperty("x-goog-api-key", apiKey)
         }
 
-        val url = URL(endpoint)
-        val conn = url.openConnection() as HttpURLConnection
-        conn.requestMethod = "POST"
-        conn.setRequestProperty("Content-Type", "application/json")
-        conn.doOutput = true
-
-        conn.outputStream.use { os ->
-            os.write(requestBody.toString().toByteArray())
-        }
-
-        if (conn.responseCode == 200) {
-            val responseText = conn.inputStream.bufferedReader().use { it.readText() }
-            return@withContext parseGeminiResponse(responseText)
-        } else {
-            return@withContext AIPlanResponse(
-                reasoning = "API Request Failed with code: ${conn.responseCode}",
-                selectedTool = null,
-                toolParameters = null,
-                isTaskComplete = true,
-                finalResponseToUser = "Apologies, I encountered an AI service connection error."
-            )
+        try {
+            conn.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
+            val code = conn.responseCode
+            val stream = if (code in 200..299) conn.inputStream else conn.errorStream
+            val text = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
+            if (code in 200..299) {
+                parseGeminiResponse(text)
+            } else {
+                AIPlanResponse("HTTP $code", null, null, true, "AI service-e somossa hocche.")
+            }
+        } catch (e: IOException) {
+            AIPlanResponse("Network error: ${e.message}", null, null, true, "Internet connection check koro.")
+        } finally {
+            conn.disconnect()
         }
     }
 
-    private fun parseGeminiResponse(jsonResponse: String): AIPlanResponse {
-        return try {
-            val root = JSONObject(jsonResponse)
-            val textContent = root.getJSONArray("candidates")
-                .getJSONObject(0)
-                .getJSONObject("content")
-                .getJSONArray("parts")
-                .getJSONObject(0)
-                .getString("text")
-                .trim()
-                .removeSurrounding("```json", "```")
-                .trim()
+    private fun parseGeminiResponse(json: String): AIPlanResponse = try {
+        val raw = JSONObject(json)
+            .getJSONArray("candidates").getJSONObject(0)
+            .getJSONObject("content").getJSONArray("parts")
+            .getJSONObject(0).getString("text")
 
-            val parsed = JSONObject(textContent)
-            val paramsMap = mutableMapOf<String, Any?>()
-            parsed.optJSONObject("toolParameters")?.let { paramsObj ->
-                val keys = paramsObj.keys()
-                while (keys.hasNext()) {
-                    val key = keys.next()
-                    paramsMap[key] = paramsObj.get(key)
-                }
-            }
+        val cleaned = raw.trim()
+            .removePrefix("```json").removePrefix("```")
+            .removeSuffix("```").trim()
 
-            AIPlanResponse(
-                reasoning = parsed.optString("reasoning", ""),
-                selectedTool = parsed.optString("selectedTool", null),
-                toolParameters = paramsMap,
-                isTaskComplete = parsed.optBoolean("isTaskComplete", false),
-                finalResponseToUser = parsed.optString("finalResponseToUser", null)
-            )
-        } catch (e: Exception) {
-            AIPlanResponse(
-                reasoning = "Parsing Error: ${e.localizedMessage}",
-                selectedTool = null,
-                toolParameters = null,
-                isTaskComplete = true,
-                finalResponseToUser = "I couldn't process the response correctly."
-            )
-        }
+        val parsed = JSONObject(cleaned)
+        val params: Map<String, Any?> = parsed.optJSONObject("toolParameters")?.let { o ->
+            o.keys().asSequence().associateWith { o.get(it) }
+        } ?: emptyMap()
+
+        AIPlanResponse(
+            reasoning = parsed.optString("reasoning", ""),
+            selectedTool = parsed.optString("selectedTool").takeIf { it.isNotBlank() },
+            toolParameters = params,
+            isTaskComplete = parsed.optBoolean("isTaskComplete", false),
+            finalResponseToUser = parsed.optString("finalResponseToUser").takeIf { it.isNotBlank() }
+        )
+    } catch (e: Exception) {
+        AIPlanResponse("Parse error: ${e.message}", null, null, true, "Uttarta bujhte parlam na.")
     }
 }

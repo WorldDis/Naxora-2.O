@@ -1,6 +1,7 @@
 package com.nexora.accessibility
 
 import android.accessibilityservice.AccessibilityService
+import android.content.Intent
 import android.view.accessibility.AccessibilityEvent
 import com.nexora.accessibility.actions.AccessibilityActionDispatcher
 import com.nexora.accessibility.node.UiNodeParser
@@ -24,6 +25,16 @@ class NexoraAccessibilityService : AccessibilityService() {
     }
 
     override fun onInterrupt() {}
+
+    override fun onUnbind(intent: Intent?): Boolean {
+        instance = null
+        return super.onUnbind(intent)
+    }
+
+    override fun onDestroy() {
+        instance = null
+        super.onDestroy()
+    }
 
     companion object {
         var instance: NexoraAccessibilityService? = null

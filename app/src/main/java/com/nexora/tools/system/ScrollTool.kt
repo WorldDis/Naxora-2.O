@@ -21,17 +21,29 @@ class ScrollTool : NexoraTool {
         val rootNode = service.rootInActiveWindow
             ?: return ToolResult.Failure("Unable to capture active screen window.")
 
+        val scrollable = findScrollable(rootNode)
+            ?: return ToolResult.Failure("No scrollable area found on screen.")
+
         val action = if (direction == "FORWARD" || direction == "DOWN") {
             AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
         } else {
             AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD
         }
 
-        val success = rootNode.performAction(action)
+        val success = scrollable.performAction(action)
         return if (success) {
             ToolResult.Success("Successfully scrolled screen: $direction")
         } else {
             ToolResult.Failure("Failed to perform scroll action.")
         }
+    }
+
+    private fun findScrollable(node: AccessibilityNodeInfo?): AccessibilityNodeInfo? {
+        if (node == null) return null
+        if (node.isScrollable) return node
+        for (i in 0 until node.childCount) {
+            findScrollable(node.getChild(i))?.let { return it }
+        }
+        return null
     }
 }

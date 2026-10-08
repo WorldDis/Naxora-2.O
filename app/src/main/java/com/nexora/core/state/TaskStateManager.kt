@@ -1,19 +1,22 @@
 package com.nexora.core.state
 
-import androidx.annotation.MainThread
+import com.nexora.core.eventbus.NexoraEvent
+import com.nexora.core.eventbus.NexoraEventBus
 
 class TaskStateManager {
     @Volatile
     private var currentState: TaskState = TaskState.IDLE
 
-    @MainThread
     fun transitionTo(state: TaskState) {
+        val old = currentState
+        if (old == state) return
         currentState = state
+        NexoraEventBus.emit(NexoraEvent.StateChanged(old, state))
     }
 
     fun getCurrentState(): TaskState = currentState
 
     fun reset() {
-        currentState = TaskState.IDLE
+        transitionTo(TaskState.IDLE)
     }
 }
