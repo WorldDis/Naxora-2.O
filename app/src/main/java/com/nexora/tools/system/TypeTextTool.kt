@@ -1,5 +1,6 @@
 package com.nexora.tools.system
 
+import android.view.accessibility.AccessibilityNodeInfo
 import com.nexora.accessibility.NexoraAccessibilityService
 import com.nexora.tools.NexoraTool
 import com.nexora.tools.RiskTier
@@ -22,10 +23,11 @@ class TypeTextTool : NexoraTool {
         val rootNode = service.rootInActiveWindow
             ?: return ToolResult.Failure("Unable to capture active screen window.")
 
+        // Label-er text node na, nijer editable field-tai khunjchhi
         val targetNode = if (fieldLabel != null) {
-            service.nodeParser.findNodeByText(rootNode, fieldLabel)
+            findEditable(rootNode, fieldLabel) ?: rootNode.findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
         } else {
-            rootNode.findFocus(android.view.accessibility.AccessibilityNodeInfo.FOCUS_INPUT)
+            rootNode.findFocus(AccessibilityNodeInfo.FOCUS_INPUT) ?: findEditable(rootNode, null)
         }
 
         if (targetNode == null) {
@@ -38,5 +40,23 @@ class TypeTextTool : NexoraTool {
         } else {
             ToolResult.Failure("Failed to type text into the targeted field.")
         }
+    }
+
+    private fun findEditable(node: AccessibilityNodeInfo?, label: String?): AccessibilityNodeInfo? {
+        if (node == null) return null
+        if (node.isEditable && (label == null || matchesLabel(node, label))) return node
+        for (i in 0 until node.childCount) {
+            findEditable(node.getChild(i), label)?.let { return it }
+        }
+        return null
+    }
+
+    private fun matchesLabel(node: AccessibilityNodeInfo, label: String): Boolean {
+        val candidates = listOfNotNull(
+            node.text?.toString(),
+            node.contentDescription?.toString(),
+            node.hintText?.toString()
+        )
+        return candidates.any { it.contains(label, ignoreCase = true) }
     }
 }

@@ -6,16 +6,21 @@ import android.graphics.PixelFormat
 import android.os.IBinder
 import android.view.Gravity
 import android.view.WindowManager
+import android.widget.Button
 import android.widget.FrameLayout
+import com.nexora.MainApplication
+import com.nexora.voice.VoiceEngine
 
 class VoiceOverlayService : Service() {
 
     private var windowManager: WindowManager? = null
     private var overlayView: FrameLayout? = null
+    private var voiceEngine: VoiceEngine? = null
 
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        voiceEngine = VoiceEngine(this, MainApplication.instance.taskStateManager)
         showOverlay()
     }
 
@@ -31,15 +36,22 @@ class VoiceOverlayService : Service() {
             y = 100
         }
 
-        overlayView = FrameLayout(this)
+        val micButton = Button(this).apply {
+            text = "Bolo"
+            contentDescription = "Voice command shuru koro"
+            setOnClickListener { voiceEngine?.startListening() }
+        }
+
+        overlayView = FrameLayout(this).apply { addView(micButton) }
         windowManager?.addView(overlayView, params)
     }
 
     override fun onDestroy() {
+        overlayView?.let { windowManager?.removeView(it) }
+        overlayView = null
+        voiceEngine?.destroy()
+        voiceEngine = null
         super.onDestroy()
-        if (overlayView != null) {
-            windowManager?.removeView(overlayView)
-        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
