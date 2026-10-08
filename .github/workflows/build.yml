@@ -22,10 +22,13 @@ jobs:
         gradle-version: '8.5'
 
     - name: Restore stable debug keystore
-      if: ${{ secrets.DEBUG_KEYSTORE_B64 != '' }}
       env:
         DEBUG_KEYSTORE_B64: ${{ secrets.DEBUG_KEYSTORE_B64 }}
       run: |
+        if [ -z "$DEBUG_KEYSTORE_B64" ]; then
+          echo "DEBUG_KEYSTORE_B64 secret nei, default debug key use hobe"
+          exit 0
+        fi
         mkdir -p ~/.android
         echo "$DEBUG_KEYSTORE_B64" | base64 -d > ~/.android/debug.keystore
 
