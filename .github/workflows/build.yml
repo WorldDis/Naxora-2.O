@@ -21,6 +21,14 @@ jobs:
       with:
         gradle-version: '8.5'
 
+    - name: Restore stable debug keystore
+      if: ${{ secrets.DEBUG_KEYSTORE_B64 != '' }}
+      env:
+        DEBUG_KEYSTORE_B64: ${{ secrets.DEBUG_KEYSTORE_B64 }}
+      run: |
+        mkdir -p ~/.android
+        echo "$DEBUG_KEYSTORE_B64" | base64 -d > ~/.android/debug.keystore
+
     - name: Build APK with Gradle
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
